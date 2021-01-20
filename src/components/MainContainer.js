@@ -7,10 +7,11 @@ import Dialog from "react-native-dialog";
 import CoinMarketDataAction from '../Actions/CoinMarketDataAction'
 import CoinListItem from './CoinListItem'
 import Portfolio from './Portfolio'
-import { AsyncStorage } from '@react-native-community/async-storage';
+//import { AsyncStorage } from '@react-native-community/async-storage';
+import PortfolioInputAction from '../Actions/PortfolioInputAction';
 
 //TODO: if more coins are planned to be added, make it more dynamic and maybe use a hashmap instead
-var coinPortfolio = [
+var portfolioInitialState = [
   ["BTC", 0],
   ["ETH", 0]
 ];
@@ -22,10 +23,10 @@ class MainContainer extends Component {
 
     this.state = {
       coinMarket: null,
+      coinPortfolio: null,
       dialogSender: "",
       isDialogVisible: false,
       dialogInput: null,
-      coinPortfolio,
       portfolioBalance: 0
     };
   }
@@ -100,7 +101,13 @@ class MainContainer extends Component {
 
   //input dialog handle
   updatePortfolio = async () => {
-    for (let coin of this.state.coinPortfolio) {
+    const { coinPortfolio } = this.props;
+    var portfolioTemp = coinPortfolio;
+
+    if (portfolioTemp.length == 0) //use default values if store is empty
+      portfolioTemp = portfolioInitialState;
+
+    for (let coin of portfolioTemp) {
       if (coin[0] === this.state.dialogSender) {
         coin[1] = parseFloat(this.state.dialogInput);
         break;
@@ -112,31 +119,36 @@ class MainContainer extends Component {
     //this.saveData(this.state.coinPortfolio[0]); //BTC
     //this.saveData(this.state.coinPortfolio[1]); //ETH
 
+    //dispatch
+    this.props.HandlePortfolioInput(portfolioTemp);
+
     //set state for redraw
-    this.setState(prevState => ({
-      coinPortfolio,
-      portfolioBalance: this.calculatePortfolio(this.state.coinPortfolio)
-    }));
+    this.setState({
+      //coinPortfolio,
+      portfolioBalance: this.calculatePortfolio()
+    });
   }
 
   //update button handle
   handleUpdate = async () => {
-    this.setState({ data: this.props.FetchCryptoData(), portfolioBalance: this.calculatePortfolio(this.state.coinBalance) });
+    this.setState({ coinMarket: this.props.FetchCryptoData(), portfolioBalance: this.calculatePortfolio() });
   }
 
   //async storage
-  saveData = async (coin) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, coin)
-      alert('Data successfully saved')
-    } catch (e) {
-      alert('Failed to save the data to the storage')
-    }
-  }
+  /* saveData = async (coin) => {
+     try {
+       await AsyncStorage.setItem(STORAGE_KEY, coin)
+       alert('Data successfully saved')
+     } catch (e) {
+       alert('Failed to save the data to the storage')
+     }
+   }*/
 
   //return the current balance for specified coin symbol
   getBalance = (coin) => {
-    for (let c of this.state.coinPortfolio) {
+    const { coinPortfolio } = this.props;
+
+    for (let c of coinPortfolio) {
       if (c[0] === coin) //if coin tag match
         return c[1] // return coin value
     };
@@ -145,9 +157,10 @@ class MainContainer extends Component {
 
   calculatePortfolio() {
     const { coinMarket } = this.props;
+    const { coinPortfolio } = this.props;
     var balance = 0;
 
-    for (let element of this.state.coinPortfolio) {
+    for (let element of coinPortfolio) {
       for (let coin of coinMarket.data.data) {
         if (coin.symbol === element[0]) {
           balance += coin.quote?.USD?.price * element[1];
@@ -168,8 +181,9 @@ const styles = {
 
 function mapStateToProps(state) {
   return {
-    coinMarket: state.coinMarket
+    coinMarket: state.coinMarket,
+    coinPortfolio: state.coinPortfolio.coinPortfolio
   }
 }
 
-export default connect(mapStateToProps, { FetchCryptoData: CoinMarketDataAction })(MainContainer);
+export default connect(mapStateToProps, { FetchCryptoData: CoinMarketDataAction, HandlePortfolioInput: PortfolioInputAction })(MainContainer);

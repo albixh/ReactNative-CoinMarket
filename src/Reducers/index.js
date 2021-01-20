@@ -1,6 +1,9 @@
 import { combineReducers } from 'redux';
-import coinMarketReducer from './CoinMarketReducer';
+import coinMarketDataReducer from './CoinMarketDataReducer';
+import portfolioInputReducer from './PortfolioInputReducer';
+
 
 export default combineReducers({
-  coinMarket: coinMarketReducer
+  coinMarket: coinMarketDataReducer,
+  coinPortfolio: portfolioInputReducer
 });
