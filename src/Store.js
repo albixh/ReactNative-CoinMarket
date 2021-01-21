@@ -11,10 +11,9 @@ import RootReducer from './Reducers';
 
 const middleware = applyMiddleware(thunk, promise, logger)
 
-//const storage = createSecureStore();
 const persistConfig = {
   key: "root",
-  storage: AsyncStorage// for mobile needs storage: AsyncStorage, but is not working
+  storage: AsyncStorage
 };
 
 const persistedReducer = persistReducer(persistConfig, RootReducer);
