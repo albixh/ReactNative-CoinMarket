@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { View, Button, ScrollView, Text, StyleSheet } from 'react-native';
+import { View, Button, TouchableOpacity ,ScrollView, Text, StyleSheet } from 'react-native';
 import Numeral from 'numeral'
 
-import Dialog from "react-native-dialog";
+import Dialog from 'react-native-dialog';
 import CoinMarketDataAction from '../Actions/CoinMarketDataAction'
 import CoinListItem from './CoinListItem'
 import Portfolio from './Portfolio'
@@ -32,7 +32,7 @@ class MainContainer extends Component {
   }
 
   componentDidMount() {
-    this.setState({ coinMarket: this.props.FetchCryptoData() });
+    this.setState({ coinMarket: this.props.FetchCryptoData(), portfolioBalance: this.calculatePortfolio() });
   }
 
   renderPortfolio() {
@@ -50,7 +50,7 @@ class MainContainer extends Component {
         price_usd={Numeral(coin.quote?.USD?.price).format('0.00')}
         total_balance={Numeral(coin.quote?.USD?.price * this.getBalance(coin.symbol)).format('0.00')}
         coin_count={this.getBalance(coin.symbol)}
-        price_change_24h={Numeral(coin.quote?.USD?.percent_change_24h).format('0.0000a')}
+        price_change_24h={Numeral(coin.quote?.USD?.percent_change_24h).format('0.00')}
         parent={this}
       />
     )
@@ -72,25 +72,28 @@ class MainContainer extends Component {
     }
 
     return (
-      <View >
+      <View>
         {this.renderPortfolio()}
         <ScrollView contentContainerStyle={styles.contentContainer}>
           {this.renderCoinListItems()}
         </ScrollView>
-        <Button
-          title="Update"
+        <View style={styles.centeredContainer}>
+        <TouchableOpacity
           onPress={this.handleUpdate}
-        />
+          style={styles.roundedButton}>
+          <Text style={styles.buttonText}>UPDATE</Text>
+        </TouchableOpacity>
+      </View>
         <View>
           <Dialog.Container visible={this.state.isDialogVisible}>
             <Dialog.Title>Coin Balance</Dialog.Title>
             <Dialog.Description>
               Enter your current balance.
             </Dialog.Description>
-            <Dialog.Input onChangeText={(input) => this.state.dialogInput = input} />
+            <Dialog.Input onChangeText={(input) => this.setState({ dialogInput: input })} />
             <Dialog.Button label="Cancel" onPress={() => this.setState({ isDialogVisible: false })} />
             <Dialog.Button label="Update" onPress={() => {
-              this.setState(prevState => ({ isDialogVisible: false, }));
+              this.setState({ isDialogVisible: false, });
               this.updatePortfolio();
             }} />
           </Dialog.Container>
@@ -104,15 +107,8 @@ class MainContainer extends Component {
     const { coinPortfolio } = this.props;
     var portfolioTemp = coinPortfolio;
 
-    if (portfolioTemp.length == 0) //use default values if store is empty
+    if (portfolioTemp == null || portfolioTemp.length == 0) //use default values if store is empty
       portfolioTemp = portfolioInitialState;
-
-    for (let coin of portfolioTemp) {
-      if (coin[0] === this.state.dialogSender) {
-        coin[1] = parseFloat(this.state.dialogInput);
-        break;
-      }
-    };
 
     //persist data
     //TODO: make dynamic, fix storage problems
@@ -120,7 +116,7 @@ class MainContainer extends Component {
     //this.saveData(this.state.coinPortfolio[1]); //ETH
 
     //dispatch
-    this.props.HandlePortfolioInput(portfolioTemp);
+    this.props.HandlePortfolioInput(portfolioTemp, this.state.dialogSender, this.state.dialogInput);
 
     //set state for redraw
     this.setState({
@@ -148,6 +144,9 @@ class MainContainer extends Component {
   getBalance = (coin) => {
     const { coinPortfolio } = this.props;
 
+    if (coinPortfolio == null)
+      return 0;
+
     for (let c of coinPortfolio) {
       if (c[0] === coin) //if coin tag match
         return c[1] // return coin value
@@ -155,10 +154,14 @@ class MainContainer extends Component {
     return 0;
   }
 
+  //return the current balance for all coins accumulated
   calculatePortfolio() {
     const { coinMarket } = this.props;
     const { coinPortfolio } = this.props;
     var balance = 0;
+
+    if (coinPortfolio == null || coinMarket == null)
+      return balance;
 
     for (let element of coinPortfolio) {
       for (let coin of coinMarket.data.data) {
@@ -173,10 +176,28 @@ class MainContainer extends Component {
 }
 
 const styles = {
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   contentContainer: {
     paddingBottom: 50,
     paddingTop: 50
-  }
+  },
+  roundedButton: {
+    width: 120,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 40,
+    backgroundColor: '#00BCD4',
+  },
+  buttonText: {    
+    fontWeight: 'bold',
+    color: 'white'
+  },
 }
 
 function mapStateToProps(state) {

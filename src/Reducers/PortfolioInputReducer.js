@@ -14,9 +14,10 @@ export default function (state = initialState, action) {
             }
         case PORTFOLIO_INPUT_FAIL:
             {
-                return Object.assign({}, state, {
-                    coinPortfolio: null,
-                });
+                //TODO: handle wrong input
+                //return Object.assign({}, state, {
+                //    coinPortfolio: null,
+                //});
             }
 
         default:

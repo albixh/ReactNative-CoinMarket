@@ -8,9 +8,9 @@ import Numeral from 'numeral';
 const Portfolio = ({ total_balance }) => {
     return (
         <View style={styles.portfolio}>
-            <View style={styles.RoundedView} >
+            <View style={styles.roundedView} >
                 <Text style={styles.title}>Portfolio</Text>
-                <Text style={styles.balance}>${Numeral(total_balance).format('0.00a')}</Text>
+                <Text style={styles.balance}>${Numeral(total_balance).format('0.00')}</Text>
             </View>
         </View>
     );
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         marginLeft: 10
     },
 
-    RoundedView: {
+    roundedView: {
         marginTop: 20,
         width: '100%',
         height: 80,
